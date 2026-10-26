@@ -12,5 +12,8 @@ data class Gasto(
     val centroCosto: String,
     val rutProveedor: String,
     val monto: Int,
-    val imagenBoletaUri: String
+    val origenFondo: String, // "Fondo por Rendir / Corp" o "Dinero Propio (Reembolso)"
+    val imagenBoletaUri: String,
+    val estado: String = "PENDIENTE", // "PENDIENTE", "APROBADO", "RECHAZADO"
+    val observacion: String = ""
 )

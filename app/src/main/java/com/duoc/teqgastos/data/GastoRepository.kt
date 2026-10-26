@@ -9,4 +9,8 @@ class GastoRepository(private val gastoDao: GastoDao) {
     suspend fun obtenerTodosLosGastos(): List<Gasto> {
         return gastoDao.obtenerTodosLosGastos()
     }
+
+    suspend fun actualizarGasto(gasto: Gasto) {
+        gastoDao.actualizarGasto(gasto)
+    }
 }

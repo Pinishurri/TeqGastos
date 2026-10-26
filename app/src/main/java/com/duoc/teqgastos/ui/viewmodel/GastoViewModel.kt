@@ -15,43 +15,69 @@ class GastoViewModel(private val repository: GastoRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(GastoUIState())
     val uiState: StateFlow<GastoUIState> = _uiState.asStateFlow()
 
-    fun actualizarMonto(nuevoMonto: String) {
-        _uiState.value = _uiState.value.copy(monto = nuevoMonto)
+    private val _listaGastos = MutableStateFlow<List<Gasto>>(emptyList())
+    val listaGastos: StateFlow<List<Gasto>> = _listaGastos.asStateFlow()
+
+    init {
+        cargarGastos()
     }
 
-    fun actualizarCategoria(nuevaCategoria: String) {
-        _uiState.value = _uiState.value.copy(categoria = nuevaCategoria)
+    fun cargarGastos() {
+        viewModelScope.launch {
+            _listaGastos.value = repository.obtenerTodosLosGastos()
+        }
     }
 
-    fun actualizarCentroCosto(nuevoCentroCosto: String) {
-        _uiState.value = _uiState.value.copy(centroCosto = nuevoCentroCosto)
-    }
-
-    fun actualizarRutProveedor(nuevoRut: String) {
-        _uiState.value = _uiState.value.copy(rutProveedor = nuevoRut)
-    }
-
-    fun actualizarImagenBoleta(uri: String) {
-        _uiState.value = _uiState.value.copy(imagenBoletaUri = uri)
-    }
+    fun actualizarMonto(monto: String) { _uiState.value = _uiState.value.copy(monto = monto) }
+    fun actualizarCategoria(categoria: String) { _uiState.value = _uiState.value.copy(categoria = categoria) }
+    fun actualizarCentroCosto(cc: String) { _uiState.value = _uiState.value.copy(centroCosto = cc) }
+    fun actualizarRutProveedor(rut: String) { _uiState.value = _uiState.value.copy(rutProveedor = rut) }
+    fun actualizarOrigenFondo(origen: String) { _uiState.value = _uiState.value.copy(origenFondo = origen) }
+    fun actualizarImagenBoleta(uri: String) { _uiState.value = _uiState.value.copy(imagenBoletaUri = uri) }
 
     fun guardarGasto() {
         val estado = _uiState.value
-        val montoNumerico = estado.monto.toIntOrNull() ?: 0
+        val montoNum = estado.monto.toIntOrNull() ?: 0
 
-        if (montoNumerico > 0 && estado.imagenBoletaUri != null) {
+        if (montoNum > 0) {
             viewModelScope.launch {
                 val nuevoGasto = Gasto(
-                    fecha = "20/10/2026",
+                    fecha = estado.fecha,
                     categoria = estado.categoria,
                     centroCosto = estado.centroCosto,
                     rutProveedor = estado.rutProveedor,
-                    monto = montoNumerico,
-                    imagenBoletaUri = estado.imagenBoletaUri
+                    monto = montoNum,
+                    origenFondo = estado.origenFondo,
+                    imagenBoletaUri = estado.imagenBoletaUri ?: ""
                 )
                 repository.insertarGasto(nuevoGasto)
                 _uiState.value = GastoUIState()
+                cargarGastos()
             }
+        }
+    }
+
+    fun cambiarEstadoGasto(gasto: Gasto, nuevoEstado: String) {
+        viewModelScope.launch {
+            repository.actualizarGasto(gasto.copy(estado = nuevoEstado))
+            cargarGastos()
+        }
+    }
+
+    fun importarTrasladoTeqRuta(categoria: String, monto: Int, detalle: String) {
+        viewModelScope.launch {
+            val gastoImportado = Gasto(
+                fecha = "20/10/2026",
+                categoria = categoria,
+                centroCosto = "CC-102 - Comisiones de Servicio Macrozona Sur",
+                rutProveedor = "TeqRuta System",
+                monto = monto,
+                origenFondo = "Fondo por Rendir / Corp",
+                imagenBoletaUri = "",
+                observacion = detalle
+            )
+            repository.insertarGasto(gastoImportado)
+            cargarGastos()
         }
     }
 }

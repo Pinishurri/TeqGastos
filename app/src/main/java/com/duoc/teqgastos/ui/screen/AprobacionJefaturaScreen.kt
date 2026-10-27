@@ -18,32 +18,48 @@ fun AprobacionJefaturaScreen(viewModel: GastoViewModel) {
         Text("Módulo Aprobación de Jefatura", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn {
-            items(gastos) { gasto ->
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Técnico: Juan Pérez | ${gasto.fecha}")
-                        Text("Categoría: ${gasto.categoria} - Monto: $${gasto.monto} CLP")
-                        Text("Origen: ${gasto.origenFondo}")
+        if (gastos.isEmpty()) {
+            Text("No hay gastos registrados.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            LazyColumn {
+                items(gastos) { gasto ->
+                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Técnico: Juan Pérez | ${gasto.fecha}")
+                            Text("Categoría: ${gasto.categoria} - Monto: $${gasto.monto} CLP")
+                            Text("Origen: ${gasto.origenFondo}")
 
-                        // Alerta automática de topes
-                        if (gasto.categoria == "Alimentación" && gasto.monto > 20000) {
-                            Text("⚠️ ALERTA: Excede el tope de Alimentación ($20.000)", color = Color.Red)
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                            Button(
-                                onClick = { viewModel.cambiarEstadoGasto(gasto, "APROBADO") },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
-                            ) {
-                                Text("Aprobar")
+                            if (gasto.categoria == "Alimentación" && gasto.monto > 20000) {
+                                Text("⚠️ ALERTA: Excede tope de Alimentación ($20.000)", color = Color.Red)
                             }
-                            Button(
-                                onClick = { viewModel.cambiarEstadoGasto(gasto, "RECHAZADO") },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                            ) {
-                                Text("Rechazar")
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (gasto.estado == "PENDIENTE") {
+                                Row(
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Button(
+                                        onClick = { viewModel.cambiarEstadoGasto(gasto, "APROBADO") },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                                    ) {
+                                        Text("Aprobar")
+                                    }
+                                    Button(
+                                        onClick = { viewModel.cambiarEstadoGasto(gasto, "RECHAZADO") },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                                    ) {
+                                        Text("Rechazar")
+                                    }
+                                }
+                            } else {
+                                val colorEstado = if (gasto.estado == "APROBADO") Color(0xFF2E7D32) else Color.Red
+                                Text(
+                                    text = "Estado: ${gasto.estado}",
+                                    color = colorEstado,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
                             }
                         }
                     }

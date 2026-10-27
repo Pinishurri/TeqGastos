@@ -1,5 +1,7 @@
 package com.duoc.teqgastos.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.duoc.teqgastos.ui.viewmodel.GastoViewModel
@@ -39,7 +42,31 @@ fun RegistroGastoScreen(viewModel: GastoViewModel, onGuardadoExitoso: () -> Unit
         }
     }
 
-    // Opciones para Dropdowns
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { concedido ->
+        if (concedido) {
+            val uri = crearUriTemporal()
+            uriTemporalCamera = uri
+            cameraLauncher.launch(uri)
+        }
+    }
+
+    fun tomarFotoConPermiso() {
+        val tienePermiso = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (tienePermiso) {
+            val uri = crearUriTemporal()
+            uriTemporalCamera = uri
+            cameraLauncher.launch(uri)
+        } else {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
     val categorias = listOf("Peaje", "Alimentación", "Estacionamiento", "Combustible", "Alojamiento", "Insumos Urgentes", "Otros")
     val centrosCosto = listOf(
         "CC-101 - Servicio Técnico Gran Concepción",
@@ -59,7 +86,6 @@ fun RegistroGastoScreen(viewModel: GastoViewModel, onGuardadoExitoso: () -> Unit
         Text("Registrar Rendición de Gasto", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Monto
         OutlinedTextField(
             value = uiState.monto,
             onValueChange = { viewModel.actualizarMonto(it) },
@@ -69,7 +95,6 @@ fun RegistroGastoScreen(viewModel: GastoViewModel, onGuardadoExitoso: () -> Unit
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Dropdown Categorías
         ExposedDropdownMenuBox(
             expanded = expandedCat,
             onExpandedChange = { expandedCat = !expandedCat }
@@ -100,7 +125,6 @@ fun RegistroGastoScreen(viewModel: GastoViewModel, onGuardadoExitoso: () -> Unit
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Dropdown Centro de Costo
         ExposedDropdownMenuBox(
             expanded = expandedCC,
             onExpandedChange = { expandedCC = !expandedCC }
@@ -158,13 +182,8 @@ fun RegistroGastoScreen(viewModel: GastoViewModel, onGuardadoExitoso: () -> Unit
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Captura y Previsualización de Cámara
         Button(
-            onClick = {
-                val uri = crearUriTemporal()
-                uriTemporalCamera = uri
-                cameraLauncher.launch(uri)
-            },
+            onClick = { tomarFotoConPermiso() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(if (uiState.imagenBoletaUri == null) "📷 Fotografiar Comprobante" else "📷 Cambiar Foto de Comprobante")
